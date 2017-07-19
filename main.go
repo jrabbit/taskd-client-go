@@ -1,15 +1,17 @@
 package main
 
 import (
+    "bytes"
     "crypto/tls"
     "crypto/x509"
+    "encoding/binary"
     "encoding/json"
     "fmt"
     "io/ioutil"
     "log"
     "os/exec"
+    "text/template"
     "time"
-    "unsafe"
 )
 
 type task struct {
@@ -51,7 +53,18 @@ func recv(conn *tls.Conn) {
     if err != nil {
         panic(err)
     }
-    log.Println(length)
+    var parsedLength int32
+    buf := bytes.NewReader(x)
+    readerr := binary.Read(buf, binary.BigEndian, &parsedLength)
+    if readerr != nil {
+        panic(readerr)
+    }
+    newbuf := make([]byte, buf)
+    z, err := conn.Read(newbuf)
+    if err != nil {
+        panic(err)
+    }
+    log.Println(buf)
 
 }
 
@@ -59,17 +72,47 @@ func mkMessage(org string, uuid string, user string) map[string]string {
     var headers = map[string]string{}
     headers["client"] = fmt.Sprintf("taskc-go %s", version())
     headers["protocol"] = "v1"
+    headers["org"] = org
+    headers["key"] = uuid
+    headers["user"] = user
     return headers
 }
 
-func stats() {
+func stats(conn *tls.Conn) {
+    msg := mkMessage("Public", "be3e0803-cb00-4803-b103-1493b89a1302", "jack")
+    msg["type"] = "statistics"
+    msgFinal := finalizeMessage(msg)
+    conn.SetDeadline(time.Now().Add(5 * time.Second))
+    log.Println(msgFinal)
 
+    conn.Write(bytes.NewBufferString(msgFinal).Bytes())
 }
 
-func finalizeMessage(msg string) string {
-    length := unsafe.Sizeof(msg)
+func finalizeMessage(msg map[string]string) string {
+    tmpl, err := template.New("test").Parse("\nclient: {{.client}}\ntype: {{.type}}\nprotocol {{.protocol}}\nuser: {{.user}}\norg: {{.org}}\nkey: {{.key}}\n")
+    if err != nil {
+        panic(err)
+    }
+    buf := new(bytes.Buffer)
+
+    err = tmpl.Execute(buf, msg)
+    if err != nil {
+        panic(err)
+    }
+    x := buf.String()
+    fmt.Println(x)
+    // length := unsafe.Sizeof(msg)
+    length := len(x)
+    log.Printf("FinalizeMessage: Got %v length", length)
     length += 4
-    return string(length) + msg
+
+    buf2 := new(bytes.Buffer)
+    len32 := int32(length)
+    // var BigEndian bigEndian
+    // binary.PutUint32(buf2.Bytes(), len64)
+    binary.Write(buf2, binary.BigEndian, len32)
+    log.Println(buf2.String())
+    return buf2.String() + x
 }
 
 func main() {
@@ -102,10 +145,11 @@ func main() {
     if err != nil {
         panic("failed to connect: " + err.Error())
     }
-    x := mkMessage("Public", "be3e0803-cb00-4803-b103-1493b89a1302", "jack")
-    log.Println(x)
+
+    // log.Println(x)
     // conn.Write()
     // log.Println(finalizeMessage(x))
+    stats(conn)
     recv(conn)
 
     conn.Close()
