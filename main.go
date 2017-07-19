@@ -9,6 +9,7 @@ import (
     "log"
     "os/exec"
     "time"
+    "unsafe"
 )
 
 type task struct {
@@ -24,6 +25,10 @@ type task struct {
     // Xid         string   `json:"xid,omitempty"`
     Reviewed string  `json:"reviewed,omitempty"`
     Urgency  float64 `json:"urgency,omitempty"`
+}
+
+func version() string {
+    return "v0.0.1a"
 }
 
 func json_read() {
@@ -48,6 +53,23 @@ func recv(conn *tls.Conn) {
     }
     log.Println(length)
 
+}
+
+func mkMessage(org string, uuid string, user string) map[string]string {
+    var headers = map[string]string{}
+    headers["client"] = fmt.Sprintf("taskc-go %s", version())
+    headers["protocol"] = "v1"
+    return headers
+}
+
+func stats() {
+
+}
+
+func finalizeMessage(msg string) string {
+    length := unsafe.Sizeof(msg)
+    length += 4
+    return string(length) + msg
 }
 
 func main() {
@@ -80,7 +102,10 @@ func main() {
     if err != nil {
         panic("failed to connect: " + err.Error())
     }
-
+    x := mkMessage("Public", "be3e0803-cb00-4803-b103-1493b89a1302", "jack")
+    log.Println(x)
+    // conn.Write()
+    // log.Println(finalizeMessage(x))
     recv(conn)
 
     conn.Close()
