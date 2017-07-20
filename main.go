@@ -49,7 +49,7 @@ func recv(conn *tls.Conn) {
     x := make([]byte, 4)
     log.Println("About to READ")
     conn.SetDeadline(time.Now().Add(5 * time.Second))
-    length, err := conn.Read(x)
+    _, err := conn.Read(x)
     if err != nil {
         panic(err)
     }
@@ -59,12 +59,18 @@ func recv(conn *tls.Conn) {
     if readerr != nil {
         panic(readerr)
     }
-    newbuf := make([]byte, buf)
-    z, err := conn.Read(newbuf)
+    // log.Println(buf)
+    // newbuf := new(bytes.Buffer)
+    data := make([]byte, 1280)
+    fuckit, err := conn.Read(data)
     if err != nil {
         panic(err)
     }
-    log.Println(buf)
+    log.Println(fuckit)
+    xyz := bytes.NewBuffer(data[fuckit:])
+    log.Println(xyz.String())
+    // log.Println(newbuf.String())
+    // log.Printf("demonic screaming %s", newbuf.String())
 
 }
 
@@ -89,7 +95,7 @@ func stats(conn *tls.Conn) {
 }
 
 func finalizeMessage(msg map[string]string) string {
-    tmpl, err := template.New("test").Parse("\nclient: {{.client}}\ntype: {{.type}}\nprotocol {{.protocol}}\nuser: {{.user}}\norg: {{.org}}\nkey: {{.key}}\n")
+    tmpl, err := template.New("test").Parse("client: {{.client}}\ntype: {{.type}}\nprotocol: {{.protocol}}\nuser: {{.user}}\norg: {{.org}}\nkey: {{.key}}\n\n")
     if err != nil {
         panic(err)
     }
@@ -101,15 +107,13 @@ func finalizeMessage(msg map[string]string) string {
     }
     x := buf.String()
     fmt.Println(x)
-    // length := unsafe.Sizeof(msg)
     length := len(x)
     log.Printf("FinalizeMessage: Got %v length", length)
     length += 4
 
     buf2 := new(bytes.Buffer)
     len32 := int32(length)
-    // var BigEndian bigEndian
-    // binary.PutUint32(buf2.Bytes(), len64)
+
     binary.Write(buf2, binary.BigEndian, len32)
     log.Println(buf2.String())
     return buf2.String() + x
