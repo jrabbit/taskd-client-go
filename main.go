@@ -44,7 +44,7 @@ func json_read() {
     fmt.Println(tasks[0].Description)
 }
 
-func recv(conn *tls.Conn) {
+func recv(conn *tls.Conn) []byte {
     log.Println("Entered recv()")
     x := make([]byte, 4)
     log.Println("About to READ")
@@ -54,24 +54,21 @@ func recv(conn *tls.Conn) {
         panic(err)
     }
     var parsedLength int32
-    buf := bytes.NewReader(x)
+    buf := bytes.NewBuffer(x)
     readerr := binary.Read(buf, binary.BigEndian, &parsedLength)
     if readerr != nil {
         panic(readerr)
     }
-    // log.Println(buf)
-    // newbuf := new(bytes.Buffer)
+    log.Println(buf)
     data := make([]byte, 1280)
     fuckit, err := conn.Read(data)
     if err != nil {
         panic(err)
     }
     log.Println(fuckit)
-    xyz := bytes.NewBuffer(data[fuckit:])
-    log.Println(xyz.String())
-    // log.Println(newbuf.String())
-    // log.Printf("demonic screaming %s", newbuf.String())
+    log.Printf("parsed msg: %s", data[:fuckit])
 
+    return data[:fuckit]
 }
 
 func mkMessage(org string, uuid string, user string) map[string]string {
@@ -149,10 +146,6 @@ func main() {
     if err != nil {
         panic("failed to connect: " + err.Error())
     }
-
-    // log.Println(x)
-    // conn.Write()
-    // log.Println(finalizeMessage(x))
     stats(conn)
     recv(conn)
 
