@@ -1,6 +1,7 @@
 package main
 
 import (
+    "bufio"
     "bytes"
     "crypto/tls"
     "crypto/x509"
@@ -10,6 +11,7 @@ import (
     "io/ioutil"
     "log"
     "os/exec"
+    "strings"
     "text/template"
     "time"
 )
@@ -45,9 +47,9 @@ func json_read() {
 }
 
 func recv(conn *tls.Conn) []byte {
-    log.Println("Entered recv()")
+    // log.Println("Entered recv()")
     x := make([]byte, 4)
-    log.Println("About to READ")
+    // log.Println("About to READ")
     conn.SetDeadline(time.Now().Add(5 * time.Second))
     _, err := conn.Read(x)
     if err != nil {
@@ -59,14 +61,14 @@ func recv(conn *tls.Conn) []byte {
     if readerr != nil {
         panic(readerr)
     }
-    log.Println(buf)
-    data := make([]byte, 1280)
+    // log.Printf("wtf is anything %d", parsedLength)
+    data := make([]byte, parsedLength)
     fuckit, err := conn.Read(data)
     if err != nil {
         panic(err)
     }
-    log.Println(fuckit)
-    log.Printf("parsed msg: %s", data[:fuckit])
+    // log.Println(fuckit)
+    // log.Printf("parsed msg: %s", data[:fuckit])
 
     return data[:fuckit]
 }
@@ -86,9 +88,44 @@ func stats(conn *tls.Conn) {
     msg["type"] = "statistics"
     msgFinal := finalizeMessage(msg)
     conn.SetDeadline(time.Now().Add(5 * time.Second))
-    log.Println(msgFinal)
+    // log.Println(msgFinal)
 
     conn.Write(bytes.NewBufferString(msgFinal).Bytes())
+}
+
+func pull(conn *tls.Conn) {
+    msg := mkMessage("Public", "ae0a6853-2b68-469d-a81c-fc5e5ab3afb5", "jackjrabbit")
+    msg["type"] = "sync"
+    msgFinal := finalizeMessage(msg)
+    conn.SetDeadline(time.Now().Add(5 * time.Second))
+    conn.Write(bytes.NewBufferString(msgFinal).Bytes())
+}
+
+type taskResponse struct {
+    SyncKey string
+    Tasks   []task
+    Status  int
+}
+
+func parseResponse(resp []byte) taskResponse {
+    buff := bytes.NewBuffer(resp)
+    scanner := bufio.NewScanner(buff)
+    var tasks []task
+    for scanner.Scan() {
+        text := scanner.Text()
+        if len(text) > 1 && strings.Split(text, "")[0] == "{" {
+            var mytask task
+            log.Println("smells like JSON")
+            log.Println(text)
+            json.Unmarshal(scanner.Bytes(), &mytask)
+            // log.Println(mytask)
+        }
+
+        // log.Println()
+        log.Println(tasks)
+    }
+    // log.Printf("parseResponse: %s")
+    return taskResponse{}
 }
 
 func finalizeMessage(msg map[string]string) string {
@@ -105,7 +142,7 @@ func finalizeMessage(msg map[string]string) string {
     x := buf.String()
     fmt.Println(x)
     length := len(x)
-    log.Printf("FinalizeMessage: Got %v length", length)
+    // log.Printf("FinalizeMessage: Got %v length", length)
     length += 4
 
     buf2 := new(bytes.Buffer)
@@ -146,8 +183,10 @@ func main() {
     if err != nil {
         panic("failed to connect: " + err.Error())
     }
-    stats(conn)
-    recv(conn)
+    // stats(conn)
+    pull(conn)
+    resp := recv(conn)
+    parseResponse(resp)
 
     conn.Close()
 }
