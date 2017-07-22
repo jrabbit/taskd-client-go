@@ -104,27 +104,37 @@ func pull(conn *tls.Conn) {
 type taskResponse struct {
     SyncKey string
     Tasks   []task
-    Status  int
+    Status  string
+    Code    int
 }
 
 func parseResponse(resp []byte) taskResponse {
     buff := bytes.NewBuffer(resp)
     scanner := bufio.NewScanner(buff)
     var tasks []task
+    var headers [][]string
     for scanner.Scan() {
         text := scanner.Text()
-        if len(text) > 1 && strings.Split(text, "")[0] == "{" {
-            var mytask task
+        var mytask task
+        if len(text) < 1 {
+            continue
+        } else if strings.Split(text, "")[0] == "{" {
             log.Println("smells like JSON")
             log.Println(text)
             json.Unmarshal(scanner.Bytes(), &mytask)
-            // log.Println(mytask)
+            tasks = append(tasks, mytask)
+        } else if strings.Contains(text, ":") {
+            xyz := strings.Split(text, ":")
+            headers = append(headers, xyz)
+        } else if len(text) == 36 {
+            log.Println("found synckey uuid, maybe?")
+            log.Println(text)
         }
-
         // log.Println()
-        log.Println(tasks)
+        // log.Println(len(tasks))
     }
     // log.Printf("parseResponse: %s")
+    log.Println(headers)
     return taskResponse{}
 }
 
