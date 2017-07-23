@@ -36,7 +36,7 @@ type task struct {
 }
 
 func version() string {
-    return "v0.0.1a"
+    return "v0.0.1b"
 }
 
 func json_read() {
@@ -103,7 +103,13 @@ func recv(conn *tls.Conn) []byte {
     return data[:fuckit]
 }
 
-func mkMessage(org string, uuid string, user string) map[string]string {
+func mkMessage(creds string) map[string]string {
+    // log.Println(creds)
+    splitted := strings.Split(creds, "/")
+    log.Println(splitted)
+    org := splitted[0]
+    user := splitted[1]
+    uuid := splitted[2]
     var headers = map[string]string{}
     headers["client"] = fmt.Sprintf("taskc-go %s", version())
     headers["protocol"] = "v1"
@@ -113,8 +119,8 @@ func mkMessage(org string, uuid string, user string) map[string]string {
     return headers
 }
 
-func stats(conn *tls.Conn) {
-    msg := mkMessage("Public", "ae0a6853-2b68-469d-a81c-fc5e5ab3afb5", "jackjrabbit")
+func stats(conn *tls.Conn, credentials string) {
+    msg := mkMessage(credentials)
     msg["type"] = "statistics"
     msgFinal := finalizeMessage(msg)
     conn.SetDeadline(time.Now().Add(5 * time.Second))
@@ -123,8 +129,8 @@ func stats(conn *tls.Conn) {
     conn.Write(bytes.NewBufferString(msgFinal).Bytes())
 }
 
-func pull(conn *tls.Conn) {
-    msg := mkMessage("Public", "ae0a6853-2b68-469d-a81c-fc5e5ab3afb5", "jackjrabbit")
+func pull(conn *tls.Conn, credentials string) {
+    msg := mkMessage(credentials)
     msg["type"] = "sync"
     msgFinal := finalizeMessage(msg)
     conn.SetDeadline(time.Now().Add(5 * time.Second))
@@ -237,7 +243,8 @@ func main() {
     // readRC()
     rc := readRC()
     conn := connect(rc)
-    stats(conn)
+    // log.Println(rc)
+    stats(conn, rc["taskd.credentials"])
     resp := recv(conn)
     log.Println(parseResponse(resp))
 
