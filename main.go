@@ -10,7 +10,11 @@ import (
     "fmt"
     "io/ioutil"
     "log"
+    "os"
     "os/exec"
+    "os/user"
+    "path/filepath"
+    "strconv"
     "strings"
     "text/template"
     "time"
@@ -44,6 +48,32 @@ func json_read() {
     var tasks []task
     json.Unmarshal(out, &tasks)
     fmt.Println(tasks[0].Description)
+}
+
+func readRC() map[string]string {
+    usr, _ := user.Current()
+    dir := usr.HomeDir
+    path := filepath.Join(dir, ".taskrc")
+    rc, err := os.Open(path)
+    if err != nil {
+        panic(err)
+    }
+    settings := make(map[string]string)
+    scanner := bufio.NewScanner(rc)
+    for scanner.Scan() {
+        text := scanner.Text()
+        if len(text) < 1 {
+            continue
+        } else if strings.Split(text, "")[0] == "#" {
+            continue
+        } else {
+            x := strings.Split(text, "=")
+            value := strings.Replace(x[1], "\\/", "/", -1)
+            settings[x[0]] = value
+        }
+    }
+    // log.Println(settings)
+    return settings
 }
 
 func recv(conn *tls.Conn) []byte {
@@ -84,7 +114,7 @@ func mkMessage(org string, uuid string, user string) map[string]string {
 }
 
 func stats(conn *tls.Conn) {
-    msg := mkMessage("Public", "be3e0803-cb00-4803-b103-1493b89a1302", "jack")
+    msg := mkMessage("Public", "ae0a6853-2b68-469d-a81c-fc5e5ab3afb5", "jackjrabbit")
     msg["type"] = "statistics"
     msgFinal := finalizeMessage(msg)
     conn.SetDeadline(time.Now().Add(5 * time.Second))
@@ -102,40 +132,49 @@ func pull(conn *tls.Conn) {
 }
 
 type taskResponse struct {
-    SyncKey string
-    Tasks   []task
-    Status  string
-    Code    int
+    SyncKey       string
+    Tasks         []task
+    Status        string
+    Code          int
+    ServerVersion string
+    RawHeaders    map[string]string
 }
 
 func parseResponse(resp []byte) taskResponse {
     buff := bytes.NewBuffer(resp)
     scanner := bufio.NewScanner(buff)
     var tasks []task
-    var headers [][]string
+    // var headers [][]string
+    headers := make(map[string]string)
+    var synckey string
     for scanner.Scan() {
         text := scanner.Text()
         var mytask task
         if len(text) < 1 {
             continue
         } else if strings.Split(text, "")[0] == "{" {
-            log.Println("smells like JSON")
-            log.Println(text)
             json.Unmarshal(scanner.Bytes(), &mytask)
             tasks = append(tasks, mytask)
         } else if strings.Contains(text, ":") {
             xyz := strings.Split(text, ":")
-            headers = append(headers, xyz)
+            headers[xyz[0]] = strings.TrimLeft(xyz[1], " ")
         } else if len(text) == 36 {
-            log.Println("found synckey uuid, maybe?")
-            log.Println(text)
+            synckey = text
         }
-        // log.Println()
-        // log.Println(len(tasks))
     }
-    // log.Printf("parseResponse: %s")
-    log.Println(headers)
-    return taskResponse{}
+    code, err := strconv.Atoi(headers["code"])
+    if err != nil {
+        panic("Couldn't convert code to int " + err.Error())
+    }
+    parsed := taskResponse{
+        SyncKey:    synckey,
+        Code:       code,
+        Tasks:      tasks,
+        Status:     headers["status"],
+        RawHeaders: headers,
+    }
+    log.Println(parsed)
+    return parsed
 }
 
 func finalizeMessage(msg map[string]string) string {
@@ -150,9 +189,7 @@ func finalizeMessage(msg map[string]string) string {
         panic(err)
     }
     x := buf.String()
-    fmt.Println(x)
     length := len(x)
-    // log.Printf("FinalizeMessage: Got %v length", length)
     length += 4
 
     buf2 := new(bytes.Buffer)
@@ -163,14 +200,9 @@ func finalizeMessage(msg map[string]string) string {
     return buf2.String() + x
 }
 
-func main() {
-    // First, create the set of root certificates. For this example we only
-    // have one. It's also possible to omit this in order to use the
-    // default root set of the current operating system.
-    log.Println("Entered main()")
-
+func connect(settings map[string]string) *tls.Conn {
     roots := x509.NewCertPool()
-    cacert, err := ioutil.ReadFile("/home/jack/.task/beta.getpizza.cat.ca.cert.pem")
+    cacert, err := ioutil.ReadFile(settings["taskd.ca"])
     if err != nil {
         panic(err)
     }
@@ -179,7 +211,7 @@ func main() {
         panic("failed to parse root certificate")
     }
 
-    cert, err := tls.LoadX509KeyPair("/home/jack/.task/pizzacat-jackjrabbit.cert.pem", "/home/jack/.task/pizzacat-jackjrabbit.key.pem")
+    cert, err := tls.LoadX509KeyPair(settings["taskd.certificate"], settings["taskd.key"])
     if err != nil {
         panic(err)
     }
@@ -193,10 +225,21 @@ func main() {
     if err != nil {
         panic("failed to connect: " + err.Error())
     }
-    // stats(conn)
-    pull(conn)
+    return conn
+}
+
+func main() {
+    log.Println("Entered main()")
+    // // stats(conn)
+    // pull(conn)
+    // resp := recv(conn)
+    // parseResponse(resp)
+    // readRC()
+    rc := readRC()
+    conn := connect(rc)
+    stats(conn)
     resp := recv(conn)
-    parseResponse(resp)
+    log.Println(parseResponse(resp))
 
     conn.Close()
 }
