@@ -5,7 +5,6 @@ import (
     "github.com/spf13/cobra"
     "log"
     "net"
-    "strconv"
     "taskc"
 )
 
@@ -33,12 +32,10 @@ var gatherCommand = &cobra.Command{
         conn.Close()
         out := taskc.ParseResponse(resp)
         statsConn := getConn()
-        uptime, err := strconv.ParseInt(out.RawHeaders["uptime"], 10, 64)
-        if err != nil {
-            panic(err)
+        for key, value := range out.RawHeaders {
+            log.Println(key, value)
+            fmt.Fprintf(statsConn, "taskd.%s:%s|g", key, value)
         }
-        fmt.Fprintf(statsConn, "taskd_uptime:%d|g", uptime)
         statsConn.Close()
-        log.Println(uptime)
     },
 }
