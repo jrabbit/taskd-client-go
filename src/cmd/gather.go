@@ -1,9 +1,11 @@
 package cmd
 
 import (
+    "fmt"
     "github.com/spf13/cobra"
-    "gopkg.in/alexcesaro/statsd.v2"
     "log"
+    "net"
+    "strconv"
     "taskc"
 )
 
@@ -11,13 +13,12 @@ func init() {
     RootCmd.AddCommand(gatherCommand)
 }
 
-func getClient() *statsd.Client {
-    c, err := statsd.New(statsd.Address("localhost:8125"))
+func getConn() net.Conn {
+    conn, err := net.Dial("udp", "localhost:8125")
     if err != nil {
         panic(err)
     }
-    defer c.Close()
-    return c
+    return conn
 }
 
 var gatherCommand = &cobra.Command{
@@ -31,9 +32,13 @@ var gatherCommand = &cobra.Command{
         resp := taskc.Recv(conn)
         conn.Close()
         out := taskc.ParseResponse(resp)
-        client := getClient()
-        client.Gauge("taskd_uptime", out.RawHeaders["uptime"])
-        log.Println(out.RawHeaders["uptime"])
-        client.Flush()
+        statsConn := getConn()
+        uptime, err := strconv.ParseInt(out.RawHeaders["uptime"], 10, 64)
+        if err != nil {
+            panic(err)
+        }
+        fmt.Fprintf(statsConn, "taskd_uptime:%d|g", uptime)
+        statsConn.Close()
+        log.Println(uptime)
     },
 }
