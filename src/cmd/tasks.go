@@ -3,7 +3,6 @@ package cmd
 import (
     "bufio"
     "bytes"
-    // "github.com/davecgh/go-spew/spew"
     "fmt"
     "github.com/spf13/cobra"
     "strings"
@@ -37,15 +36,14 @@ func getJSONTasks(resp []byte) []string {
 var tasksCmd = &cobra.Command{
     Use:   "tasks",
     Short: "grab json tasks for your user from taskd server",
-    Long:  `This subcommand downloads all your taskwarrior-json tasks and prints them to the console`,
+    Long: `This subcommand downloads all your taskwarrior-json tasks and prints them to the console.
+This command like the others in task-client uses your .taskrc file by default.`,
     Run: func(cmd *cobra.Command, args []string) {
         rc := taskc.ReadRC()
         conn := taskc.Connect(rc)
         taskc.Pull(conn, rc["taskd.credentials"])
         resp := taskc.Recv(conn)
-        // out := taskc.ParseResponse(resp)
         out := getJSONTasks(resp)
-        // spew.Dump(out)
         for _, item := range out {
             fmt.Println(item)
         }
