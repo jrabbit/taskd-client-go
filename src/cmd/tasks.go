@@ -17,17 +17,12 @@ func getJSONTasks(resp []byte) []string {
     buff := bytes.NewBuffer(resp)
     scanner := bufio.NewScanner(buff)
     var jsonTasks []string
-    headers := make(map[string]string)
     for scanner.Scan() {
         text := scanner.Text()
         if len(text) < 1 {
             continue
         } else if strings.Split(text, "")[0] == "{" {
             jsonTasks = append(jsonTasks, scanner.Text())
-        } else if strings.Contains(text, ":") {
-            xyz := strings.Split(text, ":")
-            headers[xyz[0]] = strings.TrimLeft(xyz[1], " ")
-        } else if len(text) == 36 {
         }
     }
     return jsonTasks
