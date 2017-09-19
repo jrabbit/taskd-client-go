@@ -6,7 +6,7 @@ import (
 
 var RootCmd = &cobra.Command{
     Use:   "task-client",
-    Short: " makes quick connectinos to taskd",
+    Short: " makes quick connections to taskd",
     Run: func(cmd *cobra.Command, args []string) {
         // Do Stuff Here
     },
