@@ -129,7 +129,7 @@ func Stats(conn *tls.Conn, credentials string) {
     conn.Write(bytes.NewBufferString(msgFinal).Bytes())
 }
 
-func pull(conn *tls.Conn, credentials string) {
+func Pull(conn *tls.Conn, credentials string) {
     msg := mkMessage(credentials)
     msg["type"] = "sync"
     msgFinal := finalizeMessage(msg)
@@ -144,6 +144,10 @@ type taskResponse struct {
     Code          int
     ServerVersion string
     RawHeaders    map[string]string
+}
+
+func (t taskResponse) String() string {
+    return fmt.Sprintf("%+v", t.Tasks)
 }
 
 func ParseResponse(resp []byte) taskResponse {
@@ -178,7 +182,7 @@ func ParseResponse(resp []byte) taskResponse {
         Status:     headers["status"],
         RawHeaders: headers,
     }
-    log.Println(parsed)
+    // log.Println(parsed)
     return parsed
 }
 
