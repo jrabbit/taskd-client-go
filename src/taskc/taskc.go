@@ -35,8 +35,8 @@ type task struct {
     Urgency  float64 `json:"urgency,omitempty"`
 }
 
-func version() string {
-    return "v0.0.1b"
+func Version() string {
+    return "v0.0.2b"
 }
 
 func json_read() {
@@ -111,7 +111,7 @@ func mkMessage(creds string) map[string]string {
     user := splitted[1]
     uuid := splitted[2]
     var headers = map[string]string{}
-    headers["client"] = fmt.Sprintf("taskc-go %s", version())
+    headers["client"] = fmt.Sprintf("taskc-go %s", Version())
     headers["protocol"] = "v1"
     headers["org"] = org
     headers["key"] = uuid
@@ -232,17 +232,3 @@ func Connect(settings map[string]string) *tls.Conn {
     }
     return conn
 }
-
-// func main() {
-//     log.Println("Entered main()")
-
-//     rc := readRC()
-//     conn := connect(rc)
-//     // log.Println(rc)
-
-//     stats(conn, rc["taskd.credentials"])
-//     resp := recv(conn)
-//     log.Println(parseResponse(resp))
-
-//     conn.Close()
-// }
