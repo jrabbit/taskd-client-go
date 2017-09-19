@@ -3,6 +3,7 @@ package main
 import (
     "bufio"
     "bytes"
+    "cmd"
     "crypto/tls"
     "crypto/x509"
     "encoding/binary"
@@ -150,7 +151,6 @@ func parseResponse(resp []byte) taskResponse {
     buff := bytes.NewBuffer(resp)
     scanner := bufio.NewScanner(buff)
     var tasks []task
-    // var headers [][]string
     headers := make(map[string]string)
     var synckey string
     for scanner.Scan() {
@@ -234,19 +234,23 @@ func connect(settings map[string]string) *tls.Conn {
     return conn
 }
 
-func main() {
-    log.Println("Entered main()")
-    // // stats(conn)
-    // pull(conn)
-    // resp := recv(conn)
-    // parseResponse(resp)
-    // readRC()
-    rc := readRC()
-    conn := connect(rc)
-    // log.Println(rc)
-    stats(conn, rc["taskd.credentials"])
-    resp := recv(conn)
-    log.Println(parseResponse(resp))
+// func main() {
+//     log.Println("Entered main()")
 
-    conn.Close()
+//     rc := readRC()
+//     conn := connect(rc)
+//     // log.Println(rc)
+
+//     stats(conn, rc["taskd.credentials"])
+//     resp := recv(conn)
+//     log.Println(parseResponse(resp))
+
+//     conn.Close()
+// }
+
+func main() {
+    if err := cmd.RootCmd.Execute(); err != nil {
+        fmt.Println(err)
+        os.Exit(1)
+    }
 }
