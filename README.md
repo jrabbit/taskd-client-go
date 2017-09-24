@@ -1,8 +1,8 @@
 # taskd-client-go
 A go client for taskd
 
-#Building
+# Building
 Use `gb build`
 
-#sending taskd stats to statsd
+# sending taskd stats to statsd
 `taskc-go gather`
