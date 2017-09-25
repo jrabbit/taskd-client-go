@@ -21,6 +21,8 @@ var statsCommand = &cobra.Command{
         resp := taskc.Recv(conn)
         conn.Close()
         out := taskc.ParseResponse(resp)
-        log.Println(out)
+        for key, value := range out.RawHeaders {
+            log.Println(key, value)
+        }
     },
 }
