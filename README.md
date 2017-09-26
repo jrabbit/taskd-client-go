@@ -7,4 +7,4 @@ A go client for taskd
 Use `gb build`
 
 # sending taskd stats to statsd
-`taskc-go gather`
+`taskd-client gather`
