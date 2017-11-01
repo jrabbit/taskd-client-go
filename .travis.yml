@@ -2,7 +2,9 @@ language: go
 go:
 - 1.x
 install: go get github.com/constabulary/gb/...
-script: gb test -v
+script:
+	- gb test -v
+	- gb build
 deploy:
   provider: releases
   skip_cleanup: true
