@@ -1,25 +1,26 @@
 package cmd
 
 import (
-    "github.com/spf13/cobra"
+	"github.com/spf13/cobra"
 )
 
 var RootCmd = &cobra.Command{
-    Use:   "task-client",
-    Short: " makes quick connections to taskd",
-    Run: func(cmd *cobra.Command, args []string) {
-        // Do Stuff Here
-    },
+	Use:   "task-client",
+	Short: " makes quick connections to taskd",
+	Run: func(cmd *cobra.Command, args []string) {
+		// Do Stuff Here
+		cmd.Help()
+	},
 }
 
 func init() {
-    cobra.OnInitialize(initConfig)
+	cobra.OnInitialize(initConfig)
 }
 
 func Execute() {
-    RootCmd.Execute()
+	RootCmd.Execute()
 }
 
 func initConfig() {
-    return
+	return
 }
