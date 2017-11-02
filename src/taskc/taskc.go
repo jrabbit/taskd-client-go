@@ -56,6 +56,7 @@ func ReadRC() map[string]string {
 	path := filepath.Join(dir, ".taskrc")
 	rc, err := os.Open(path)
 	if err != nil {
+		fmt.Println("We tried looking for your taskrc. If you don't have one use the cert flags")
 		panic(err)
 	}
 	settings := make(map[string]string)
