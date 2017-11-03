@@ -1,6 +1,7 @@
 package cmd
 
 import (
+    "fmt"
     "github.com/spf13/cobra"
     "taskc"
 )
@@ -17,5 +18,6 @@ var healthcheckCommand = &cobra.Command{
         rc := taskc.ReadRC()
         conn := taskc.Connect(rc)
         conn.Close()
+        fmt.Println(Settings)
     },
 }

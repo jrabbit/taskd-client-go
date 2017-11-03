@@ -13,8 +13,16 @@ var RootCmd = &cobra.Command{
 	},
 }
 
+var Settings struct {
+	Key, Server, Certificate, CACert string
+}
+
 func init() {
 	cobra.OnInitialize(initConfig)
+	RootCmd.PersistentFlags().StringVar(&Settings.Server, "server", "", "the taskd server to connect to")
+	RootCmd.PersistentFlags().StringVar(&Settings.Certificate, "certificate", "", "the user cert for auth")
+	RootCmd.PersistentFlags().StringVar(&Settings.CACert, "cacert", "", "the server's ca cert")
+	RootCmd.PersistentFlags().StringVar(&Settings.Key, "key", "", "the user key for auth")
 }
 
 func Execute() {
