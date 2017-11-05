@@ -151,8 +151,8 @@ func (t taskResponse) String() string {
     return fmt.Sprintf("%+v", t.Tasks)
 }
 
-type taskSettings struct {
-    Key, Server, Certificate, CACert string
+type TaskSettings struct {
+    Key, Server, Certificate, CACert, Creds string
 }
 
 func ParseResponse(resp []byte) taskResponse {
@@ -214,16 +214,17 @@ func finalizeMessage(msg map[string]string) string {
     return buf2.String() + x
 }
 
-func MakeSettings(rc map[string]string) taskSettings {
-    return taskSettings{
+func MakeSettings(rc map[string]string) TaskSettings {
+    return TaskSettings{
         Server:      rc["taskd.server"],
         Certificate: rc["taskd.certificate"],
         Key:         rc["taskd.key"],
         CACert:      rc["taskd.ca"],
+        Creds:       rc["taskd.credentials"],
     }
 }
 
-func Connect(settings taskSettings) *tls.Conn {
+func Connect(settings TaskSettings) *tls.Conn {
     roots := x509.NewCertPool()
     cacert, err := ioutil.ReadFile(settings.CACert)
     if err != nil {

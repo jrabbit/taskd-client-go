@@ -18,7 +18,7 @@ var statsCommand = &cobra.Command{
         rc := taskc.ReadRC()
         settings := taskc.MakeSettings(rc)
         conn := taskc.Connect(settings)
-        taskc.Stats(conn, rc["taskd.credentials"])
+        taskc.Stats(conn, settings.Creds)
         resp := taskc.Recv(conn)
         conn.Close()
         out := taskc.ParseResponse(resp)
