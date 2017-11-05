@@ -16,7 +16,8 @@ var healthcheckCommand = &cobra.Command{
     Long:  `Ping the taskd server`,
     Run: func(cmd *cobra.Command, args []string) {
         rc := taskc.ReadRC()
-        conn := taskc.Connect(rc)
+        settings := taskc.MakeSettings(rc)
+        conn := taskc.Connect(settings)
         conn.Close()
         fmt.Println(Settings)
     },

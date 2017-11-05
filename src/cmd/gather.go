@@ -26,7 +26,8 @@ var gatherCommand = &cobra.Command{
     Long:  `This sends a message of the type "statistics" to taskd, then parses the headers and passes them to statsd`,
     Run: func(cmd *cobra.Command, args []string) {
         rc := taskc.ReadRC()
-        conn := taskc.Connect(rc)
+        settings := taskc.MakeSettings(rc)
+        conn := taskc.Connect(settings)
         taskc.Stats(conn, rc["taskd.credentials"])
         resp := taskc.Recv(conn)
         conn.Close()

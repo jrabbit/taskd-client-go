@@ -35,7 +35,8 @@ var tasksCmd = &cobra.Command{
 This command like the others in task-client uses your .taskrc file by default.`,
     Run: func(cmd *cobra.Command, args []string) {
         rc := taskc.ReadRC()
-        conn := taskc.Connect(rc)
+        settings := taskc.MakeSettings(rc)
+        conn := taskc.Connect(settings)
         taskc.Pull(conn, rc["taskd.credentials"])
         resp := taskc.Recv(conn)
         out := getJSONTasks(resp)
