@@ -34,10 +34,9 @@ var tasksCmd = &cobra.Command{
     Long: `This subcommand downloads all your taskwarrior-json tasks and prints them to the console.
 This command like the others in task-client uses your .taskrc file by default.`,
     Run: func(cmd *cobra.Command, args []string) {
-        rc := taskc.ReadRC()
-        settings := taskc.MakeSettings(rc)
-        conn := taskc.Connect(settings)
-        taskc.Pull(conn, rc["taskd.credentials"])
+        conn, settings := taskc.SimpleConn(Settings)
+        taskc.CheckCreds(settings)
+        taskc.Pull(conn, settings.Creds)
         resp := taskc.Recv(conn)
         out := getJSONTasks(resp)
         for _, item := range out {

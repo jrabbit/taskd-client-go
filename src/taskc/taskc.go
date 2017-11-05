@@ -50,14 +50,15 @@ func json_read() {
     fmt.Println(tasks[0].Description)
 }
 
-func ReadRC() map[string]string {
+func ReadRC() (map[string]string, error) {
     usr, _ := user.Current()
     dir := usr.HomeDir
     path := filepath.Join(dir, ".taskrc")
     rc, err := os.Open(path)
     if err != nil {
-        fmt.Println("We tried looking for your taskrc. If you don't have one use the cert flags")
-        panic(err)
+        // fmt.Println("We tried looking for your taskrc. If you don't have one use the cert flags")
+        // panic(err)
+        return nil, err
     }
     settings := make(map[string]string)
     scanner := bufio.NewScanner(rc)
@@ -74,7 +75,48 @@ func ReadRC() map[string]string {
         }
     }
     // log.Println(settings)
-    return settings
+    return settings, nil
+}
+
+func CheckCreds(settings TaskSettings) {
+    if settings.Creds == "" {
+        fmt.Println("No credentials specified. Cowardly exiting.")
+        os.Exit(42)
+    }
+}
+
+func SimpleConn(cobraSettings TaskSettings) (*tls.Conn, TaskSettings) {
+    var settings TaskSettings
+    if cobraSettings.NoRC {
+        settings = cobraSettings
+        // This is needed by all commands.
+        if settings.Server == "" {
+            fmt.Println("You didn't specify a sever! Cowardly exiting.")
+            os.Exit(69)
+        }
+        if settings.CACert == "" {
+            fmt.Println("No CACert specified! Cowardly exiting.")
+            os.Exit(69)
+        }
+        if settings.Certificate == "" {
+            fmt.Println("No user cert specified for mtls")
+            os.Exit(69)
+        }
+        if settings.Key == "" {
+            fmt.Println("No user key specified for mtls")
+            os.Exit(69)
+        }
+    } else {
+        rc, err := ReadRC()
+        if err != nil {
+            fmt.Println("Warning: We couldn't find or open your taskrc file")
+            settings = cobraSettings
+        } else {
+            settings = MakeSettings(rc)
+        }
+    }
+    conn := Connect(settings)
+    return conn, settings
 }
 
 func Recv(conn *tls.Conn) []byte {
@@ -153,6 +195,7 @@ func (t taskResponse) String() string {
 
 type TaskSettings struct {
     Key, Server, Certificate, CACert, Creds string
+    NoRC                                    bool
 }
 
 func ParseResponse(resp []byte) taskResponse {
@@ -228,7 +271,7 @@ func Connect(settings TaskSettings) *tls.Conn {
     roots := x509.NewCertPool()
     cacert, err := ioutil.ReadFile(settings.CACert)
     if err != nil {
-        panic(err)
+        panic("failed to load CA cert " + err.Error())
     }
     ok := roots.AppendCertsFromPEM(cacert)
     if !ok {
@@ -237,7 +280,7 @@ func Connect(settings TaskSettings) *tls.Conn {
 
     cert, err := tls.LoadX509KeyPair(settings.Certificate, settings.Key)
     if err != nil {
-        panic(err)
+        panic("failed to open cert/key: " + err.Error())
     }
     tlsConfig := &tls.Config{
         Certificates: []tls.Certificate{cert},

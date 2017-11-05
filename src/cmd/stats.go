@@ -15,9 +15,8 @@ var statsCommand = &cobra.Command{
     Short: "Get stats from taskd",
     Long:  `This sends a message of the type "statistics" to taskd, see "gather" for more options`,
     Run: func(cmd *cobra.Command, args []string) {
-        rc := taskc.ReadRC()
-        settings := taskc.MakeSettings(rc)
-        conn := taskc.Connect(settings)
+        conn, settings := taskc.SimpleConn(Settings)
+        taskc.CheckCreds(settings)
         taskc.Stats(conn, settings.Creds)
         resp := taskc.Recv(conn)
         conn.Close()
