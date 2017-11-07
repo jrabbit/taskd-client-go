@@ -36,7 +36,7 @@ type task struct {
 }
 
 func Version() string {
-    return "v0.0.2b"
+    return "v0.0.3"
 }
 
 func json_read() {
@@ -90,22 +90,7 @@ func SimpleConn(cobraSettings TaskSettings) (*tls.Conn, TaskSettings) {
     if cobraSettings.NoRC {
         settings = cobraSettings
         // This is needed by all commands.
-        if settings.Server == "" {
-            fmt.Println("You didn't specify a sever! Cowardly exiting.")
-            os.Exit(69)
-        }
-        if settings.CACert == "" {
-            fmt.Println("No CACert specified! Cowardly exiting.")
-            os.Exit(69)
-        }
-        if settings.Certificate == "" {
-            fmt.Println("No user cert specified for mtls")
-            os.Exit(69)
-        }
-        if settings.Key == "" {
-            fmt.Println("No user key specified for mtls")
-            os.Exit(69)
-        }
+
     } else {
         rc, err := ReadRC()
         if err != nil {
@@ -114,6 +99,22 @@ func SimpleConn(cobraSettings TaskSettings) (*tls.Conn, TaskSettings) {
         } else {
             settings = MakeSettings(rc)
         }
+    }
+    if settings.Server == "" {
+        fmt.Println("You didn't specify a sever! Cowardly exiting.")
+        os.Exit(69)
+    }
+    if settings.CACert == "" {
+        fmt.Println("No CACert specified! Cowardly exiting.")
+        os.Exit(69)
+    }
+    if settings.Certificate == "" {
+        fmt.Println("No user cert specified for mtls")
+        os.Exit(69)
+    }
+    if settings.Key == "" {
+        fmt.Println("No user key specified for mtls")
+        os.Exit(69)
     }
     conn := Connect(settings)
     return conn, settings
@@ -195,7 +196,7 @@ func (t taskResponse) String() string {
 
 type TaskSettings struct {
     Key, Server, Certificate, CACert, Creds string
-    NoRC                                    bool
+    NoRC, Insecure                          bool
 }
 
 func ParseResponse(resp []byte) taskResponse {
@@ -283,8 +284,9 @@ func Connect(settings TaskSettings) *tls.Conn {
         panic("failed to open cert/key: " + err.Error())
     }
     tlsConfig := &tls.Config{
-        Certificates: []tls.Certificate{cert},
-        RootCAs:      roots,
+        Certificates:       []tls.Certificate{cert},
+        RootCAs:            roots,
+        InsecureSkipVerify: settings.Insecure,
     }
     tlsConfig.BuildNameToCertificate()
 
