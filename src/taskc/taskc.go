@@ -56,8 +56,6 @@ func ReadRC() (map[string]string, error) {
     path := filepath.Join(dir, ".taskrc")
     rc, err := os.Open(path)
     if err != nil {
-        // fmt.Println("We tried looking for your taskrc. If you don't have one use the cert flags")
-        // panic(err)
         return nil, err
     }
     settings := make(map[string]string)
@@ -74,7 +72,6 @@ func ReadRC() (map[string]string, error) {
             settings[x[0]] = value
         }
     }
-    // log.Println(settings)
     return settings, nil
 }
 
@@ -89,8 +86,6 @@ func SimpleConn(cobraSettings TaskSettings) (*tls.Conn, TaskSettings) {
     var settings TaskSettings
     if cobraSettings.NoRC {
         settings = cobraSettings
-        // This is needed by all commands.
-
     } else {
         rc, err := ReadRC()
         if err != nil {
