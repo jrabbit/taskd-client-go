@@ -1,10 +1,10 @@
 # taskd-client-go
 A go client for taskd
 
-[![Build Status](https://travis-ci.org/jrabbit/taskd-client-go.svg?branch=master)](https://travis-ci.org/jrabbit/taskd-client-go)
+[![Build Status](https://travis-ci.com/jrabbit/taskd-client-go.svg?branch=dev)](https://travis-ci.com/jrabbit/taskd-client-go)
 
 # Building
-Use `gb build`
+Use `go build`
 
 # sending taskd stats to statsd
-`taskd-client gather`
+`taskd-client-go gather`
