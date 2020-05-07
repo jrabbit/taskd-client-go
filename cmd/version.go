@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"github.com/jrabbit/taskd-client-go/taskc"
+	"github.com/spf13/cobra"
 )
 
 func init() {

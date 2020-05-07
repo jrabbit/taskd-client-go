@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
 	"github.com/jrabbit/taskd-client-go/taskc"
+	"github.com/spf13/cobra"
 )
 
 var RootCmd = &cobra.Command{
