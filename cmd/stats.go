@@ -3,7 +3,7 @@ package cmd
 import (
     "github.com/spf13/cobra"
     "log"
-    "taskc"
+    "github.com/jrabbit/taskd-client-go/taskc"
 )
 
 func init() {

@@ -5,7 +5,7 @@ import (
     "github.com/spf13/cobra"
     "log"
     "net"
-    "taskc"
+    "github.com/jrabbit/taskd-client-go/taskc"
 )
 
 var statsDServer string

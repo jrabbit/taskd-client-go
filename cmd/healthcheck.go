@@ -3,7 +3,7 @@ package cmd
 import (
     "fmt"
     "github.com/spf13/cobra"
-    "taskc"
+    "github.com/jrabbit/taskd-client-go/taskc"
 )
 
 func init() {

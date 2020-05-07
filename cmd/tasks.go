@@ -6,7 +6,8 @@ import (
     "fmt"
     "github.com/spf13/cobra"
     "strings"
-    "taskc"
+    "github.com/jrabbit/taskd-client-go/taskc"
+    "log"
 )
 
 func init() {
@@ -38,6 +39,7 @@ This command like the others in task-client uses your .taskrc file by default.`,
         taskc.CheckCreds(settings)
         taskc.Pull(conn, settings.Creds)
         resp := taskc.Recv(conn)
+        log.Printf("%s", resp)
         out := getJSONTasks(resp)
         for _, item := range out {
             fmt.Println(item)
