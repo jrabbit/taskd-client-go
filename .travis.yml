@@ -5,6 +5,7 @@ go:
   - 1.x
 deploy:
   provider: releases
+  edge: true
   file: "./taskd-client-go"
   on:
     tags: true
